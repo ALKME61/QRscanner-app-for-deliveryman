@@ -1,0 +1,129 @@
+/* src/styles/reset.css */
+
+/* 1. Убираем внутренние отступы */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 2. Настройки документа */
+html {
+  font-size: 100%; /* 16px по умолчанию */
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%; /* Предотвращает авто-масштабирование на iOS */
+}
+
+/* 3. Настройки body */
+body {
+  min-height: 100vh;
+  line-height: 1.5;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 4. Удаляем стили списков */
+ul,
+ol {
+  list-style: none;
+}
+
+/* 5. Элементы форм наследуют шрифт */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* 6. Сбрасываем стили кнопок */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 7. Убираем подчеркивание ссылок по умолчанию */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 8. Медиа-элементы */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 9. Предотвращаем переполнение текста */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* 10. Устанавливаем моноширинный шрифт для code, pre */
+code,
+kbd,
+samp,
+pre {
+  font-family: monospace, monospace;
+  font-size: 1em;
+}
+
+/* 11. Убираем анимации для людей, которые их не хотят */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 12. Скрываем visually hidden элементы */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+input {
+  /* Убираем внутренние отступы в Safari */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
+  /* Убираем рамку в Firefox */
+  border: 0;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  
+  /* Убираем синюю обводку в Chrome */
+  outline: none;
+  
+  /* Плавные переходы */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}

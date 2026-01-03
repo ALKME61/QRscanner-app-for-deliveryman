@@ -1,0 +1,31 @@
+.flex {display:flex}
+.mt-4 {margin-top: 1rem}
+.p-4 {padding: 1rem}
+.f-c{display:flex; flex-direction: column;}
+.f-r{display:flex; flex-direction: row;}
+.text-xs{
+    font-size: 0.75rem;
+}
+.text-s{
+    font-size: 0.875rem;
+}
+.text-base{
+    font-size: 1rem;
+}
+.text-lg{
+    font-size: 1.125rem;
+}
+.text-xl{
+    font-size: 1.25rem;
+}
+.text-xxl{
+    font-size: 1.5rem;
+}
+
+.text-primary{
+    color: #252525;
+}
+
+.text-secondary{
+    color: #7a7a7a
+}
