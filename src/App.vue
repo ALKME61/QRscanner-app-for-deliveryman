@@ -1,15 +1,12 @@
 <template>
-  <div>
-    <p class="error">{{ error }}</p>
-
-    <p class="decode-result">
-      Last result: <b>{{ result }}</b>
-    </p>
-
+  <div class="main">
     <div class="qrcode-container">
+      <div>
+        <b>{{ result }}</b>
+      </div>
       <qrcode-stream
         :constraints="selectedConstraints"
-        :track="paintOutline"
+        :track="paintCenterText"
         @error="onError"
         @detect="onDetect"
         @camera-on="onCameraReady"
@@ -185,7 +182,14 @@ function onError(err) {
 }
 
 .qrcode-container{
-  width:20vw;
-  height:20vw;
+  width:100vw;
+  height:100vh;
+}
+
+.main{
+  display: flex;
+  flex-direction:column;
+  align-items: center;
+  justify-content: center;
 }
 </style>
