@@ -1,3 +1,12 @@
+<script setup>
+import {useRouter} from 'vue-router'
+
+const router = useRouter()
+
+function navigateToQRscanner() {
+    router.push('/qr-scanner')
+}
+</script>
 <template>
   <div id="app">
     <div class="signin f-c">
@@ -7,7 +16,7 @@
       <div class="signin__form f-c">
         <input type="text" class="signin__form__input" placeholder="Логин">
         <input type="text" class="signin__form__input" placeholder="Пароль">
-        <button class="signin__form__button"><router-link to="/qr-scanner"><p>Войти в аккаунт</p></router-link></button>
+        <button class="signin__form__button" @click="navigateToQRscanner"><p>Войти в аккаунт</p></button>
       </div>
     </div>
   </div>
