@@ -2,7 +2,7 @@
     <div class="main">
         <div class="qrcode-container">
             <div class="go-back">
-                <img src="../../public/weui_back-filled.svg" alt="">
+                <img src="../../public/weui_back-filled.svg" class="go-back__button" @click="onArrowClick" alt="">
             </div>
             <qrcode-stream :constraints="selectedConstraints" :track="paintCenterText" @error="onError"
                 @detect="onDetect" @camera-on="onCameraReady" style="position: absolute;" />
@@ -14,7 +14,7 @@
                     <div class="corner corner-bl"></div>
                     <div class="corner corner-br"></div>
                 </div>
-                <div class="task-container">Отсканировано {{boxCounter.scannedBoxes}}/3</div>
+                <div class="task-container">Отсканировано {{ boxCounter.scannedBoxes }}/{{ boxCounter.allBoxes }}</div>
             </div>
 
         </div>
@@ -24,20 +24,68 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { QrcodeStream } from 'vue-qrcode-reader'
-
+import { useRouter } from 'vue-router'
+import { useChoosenTaskStore } from '@/stores/selectedTaskStore'
 /*** detection handling ***/
 
+const choosenTask = useChoosenTaskStore()
+
+const boxFingerPrint = {
+    token: "helloworld",
+}
+
+const expectedBoxes = ref([
+    {
+        id: 1
+    },
+    {
+        id: 2
+    },
+    {
+        id: 3
+    }
+])
+
 const boxCounter = ref({
-    allBoxes: 3,
-    scannedBoxes:0
+    allBoxes: expectedBoxes.value.length,
+    scannedBoxes: 0
 })
+
+const router = useRouter()
+
+const onArrowClick = () => {
+    router.back()
+}
 
 const result = ref('')
 
 function onDetect(detectedCodes) {
-    console.log(detectedCodes)
-    boxCounter.value.scannedBoxes++
-    result.value = JSON.stringify(detectedCodes.map((code) => code.rawValue))
+    console.log(detectedCodes);
+    console.log(choosenTask.currentTask)
+    if (detectedCodes.length > 0) {
+        // Получаем первый обнаруженный код (или обрабатываем все)
+        const detectedId = detectedCodes[0].rawValue;
+        console.log('Обнаружен ID:', detectedId);
+        
+        // Преобразуем в число, если нужно
+        const numericId = Number(detectedId);
+        
+        // Ищем в expectedBoxes по ID
+        const foundBox = expectedBoxes.value.find(box => box.id === numericId);
+        
+        if (foundBox) {
+            console.log('Найден бокс:', foundBox);
+            result.value = JSON.stringify(detectedCodes.map(code => code.rawValue));
+            boxCounter.value.scannedBoxes++
+            // Дополнительные действия при успешном обнаружении
+        } else {
+            console.log('Бокс с ID', numericId, 'не найден в ожидаемых');
+            // Действия, если бокс не найден
+        }
+    }
+    if(boxCounter.value.scannedBoxes === boxCounter.value.allBoxes){
+        router.back()
+    }
 }
 
 /*** select camera ***/
@@ -183,37 +231,45 @@ function onError(err) {
 </script>
 
 <style scoped lang="scss">
-    .go-back{
-        position: absolute ;
-        top:12%;
-        left: 10%;
-        z-index:111;
-        img{
-            width: 16px;
-        }
+.go-back {
+    position: absolute;
+    top: 12%;
+    left: 10%;
+    z-index: 111;
+
+    .go-back__button {
+        width: 16px;
     }
-    .task-container {
-        background-color: #fff;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-        padding-left: 1.75rem;
-        padding-right: 1.75rem;
-        border-radius: 8px;
+
+    .go-back__button:hover {
+        cursor: pointer;
     }
-    .scan-overlay{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        position: absolute;
-        gap:200px;
-        top:35%;
-        width: 100%;
-    }
+}
+
+.task-container {
+    background-color: #fff;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+    border-radius: 8px;
+}
+
+.scan-overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    position: absolute;
+    gap: 100px;
+    top: 30%;
+    width: 100%;
+}
+
 .scan-window {
     position: relative;
-    width: 200px;
-    height: 200px;
+    width: 300px;
+    height: 300px;
 }
 
 .corner {
