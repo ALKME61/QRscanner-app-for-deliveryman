@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-export type TaskType = "Приёмка" | "Выдача" | null
+export type TaskType = "acceptance" | "issue" | null
 
 export const useChoosenTaskStore = defineStore('choosenTask', () => {
     

@@ -1,5 +1,22 @@
 <script setup>
 import {useRouter} from 'vue-router'
+import { onMounted } from 'vue';
+import { usePVZStore } from '@/stores/PVZsAndBoxesStore';
+
+const PVZStore = usePVZStore()
+
+onMounted(() => {
+  PVZStore.addPVZ(1, "Москва")
+  PVZStore.addPVZ(2, "Питер")
+  PVZStore.addBoxes(1, 1, "acceptance")
+  PVZStore.addBoxes(2, 1, "acceptance")
+  PVZStore.addBoxes(3, 1, "acceptance")
+  PVZStore.addBoxes(1, 2, "acceptance")
+  PVZStore.addBoxes(2, 2, "acceptance")
+  PVZStore.addBoxes(3, 2, "acceptance")
+
+  console.log(PVZStore.pvzList)
+})
 
 const router = useRouter()
 
@@ -16,7 +33,7 @@ function navigateToSelectTask() {
       <div class="signin__form f-c">
         <input type="text" class="signin__form__input" placeholder="Логин">
         <input type="text" class="signin__form__input" placeholder="Пароль">
-        <button class="signin__form__button" @click="navigateToSelectTask"><p>Войти в аккаунт</p></button>
+        <button class="signin__form__button button" @click="navigateToSelectTask"><p>Войти в аккаунт</p></button>
       </div>
     </div>
   </div>
@@ -46,20 +63,7 @@ function navigateToSelectTask() {
       border: solid #cecece 1px;
       border-radius: 8px;
     }
-    .signin__form__button{
-      height: 3rem;
-      background-color: #f8a41e;
-      border-radius: 8px;
-      transition-duration: 0.3s;
-      p {
-        color: #ffffff;
-        font-weight: 300;
-      }
-    }
-    .signin__form__button:active{
-      transition-duration: 0.3s;
-      background-color: #f19a0e;
-    }
+
   }
 }
 </style>

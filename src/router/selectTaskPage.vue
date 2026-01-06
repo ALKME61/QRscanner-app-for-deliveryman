@@ -8,7 +8,7 @@ const router = useRouter()
 
 function navigateToPVZselector(triggeredBy: TaskType) {
     choosenTask.currentTask = triggeredBy
-    router.push("/qr-scanner")
+    router.push("/pvz-page/" + triggeredBy)
 }
 
 </script>
@@ -20,9 +20,9 @@ function navigateToPVZselector(triggeredBy: TaskType) {
             </h1>
             <div class="signin__form f-c">
 
-                <button class="signin__form__button" @click="navigateToPVZselector('Приёмка')">
+                <button class="signin__form__button button" @click="navigateToPVZselector('acceptance')">
                     <p>Приём товара</p>
-                </button><button class="signin__form__button" @click="navigateToPVZselector('Выдача')">
+                </button><button class="signin__form__button button" @click="navigateToPVZselector('issue')">
                     <p>Выдача товара</p>
                 </button>
             </div>
@@ -55,22 +55,7 @@ function navigateToPVZselector(triggeredBy: TaskType) {
             border-radius: 8px;
         }
 
-        .signin__form__button {
-            height: 3rem;
-            background-color: #f8a41e;
-            border-radius: 8px;
-            transition-duration: 0.3s;
 
-            p {
-                color: #ffffff;
-                font-weight: 300;
-            }
-        }
-
-        .signin__form__button:active {
-            transition-duration: 0.3s;
-            background-color: #f19a0e;
-        }
     }
 }
 </style>
