@@ -7,6 +7,7 @@
             <qrcode-stream :constraints="selectedConstraints" :track="paintCenterText" @error="onError"
                 @detect="onDetect" @camera-on="onCameraReady" style="position: absolute;" />
             <div class="scan-overlay">
+                <CustomSelect :options="3" @click="getTasks"/>
                 <div class="scan-window">
                     <!-- Уголки для обозначения области сканирования -->
                     <div class="corner corner-tl"></div>
@@ -21,14 +22,30 @@
     </div>
 </template>
 
+
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { QrcodeStream } from 'vue-qrcode-reader'
-import { useRouter } from 'vue-router'
-import { useChoosenTaskStore } from '@/stores/selectedTaskStore'
+import { useRouter, useRoute } from 'vue-router'
+
+import { usePVZStore } from '@/stores/pvz.store'
+import CustomSelect from '../components/CustomSelect.vue'
+
+import type {TaskType} from '@/types/index'
 /*** detection handling ***/
 
-const choosenTask = useChoosenTaskStore()
+const router = useRouter()
+const route = useRoute()
+
+//Блок функций работы с pvzstore
+
+const pvzStore = usePVZStore()
+
+function getTasks(){
+    const pvz = pvzStore.pvzList.find(pvz => pvz.id === Number(route.params.id))
+
+    console.log(pvz)
+}
 
 const boxFingerPrint = {
     token: "helloworld",
@@ -51,7 +68,6 @@ const boxCounter = ref({
     scannedBoxes: 0
 })
 
-const router = useRouter()
 
 const onArrowClick = () => {
     router.back()
@@ -262,7 +278,7 @@ function onError(err) {
     flex-direction: column;
     position: absolute;
     gap: 100px;
-    top: 30%;
+    top: 10%;
     width: 100%;
 }
 

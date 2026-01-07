@@ -1,33 +1,35 @@
 <script setup>
-import { usePVZStore } from '@/stores/PVZsAndBoxesStore';
+import { usePVZStore } from '@/stores/pvz.store';
 import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 // Получаем store
 const PVZStore = usePVZStore();
 
 // Для реактивности используем storeToRefs
 const { pvzList } = storeToRefs(PVZStore);
+
+function handlePvzClick(pvzId) {
+    router.push(`qr-scanner/${pvzId}`)
+    // Здесь можно добавить логику перехода или выбора
+    // Например: this.$router.push(`/pvz/${pvzId}`)
+}
 </script>
 
 <template>
     <div class="pvz-chooser f-c form-container">
         <!-- Проверяем, есть ли ПВЗ -->
         <div v-if="pvzList && pvzList.length > 0">
-            <button 
-                class="pvz-chooser__button button" 
-                v-for="pvz in pvzList" 
-                :key="pvz.id"
-                @click="handlePvzClick(pvz.id)"
-            >
+            <button class="pvz-chooser__button button" v-for="pvz in pvzList" :key="pvz.id"
+                @click="handlePvzClick(pvz.id)">
                 <p class="pvz-name">ПВЗ: {{ pvz.location }}</p>
                 <p class="pvz-stats">Коробок: {{ pvz.boxes.length }}</p>
                 <!-- Дополнительная информация -->
                 <div class="task-types" v-if="pvz.boxes.length > 0">
-                    <span v-for="(count, type) in getTaskTypeCounts(pvz.boxes)" 
-                          :key="type"
-                          class="task-badge"
-                          :class="getTaskClass(type)">  
-                        {{ type }}: {{ count }}
+                    <span v-for="(count, type) in getTaskTypeCounts(pvz.boxes)" :key="type" class="task-badge"
+                        :class="getTaskClass(type)">
+                        {{ type == "acceptance" ? "Приёмка" : "Выдача" }}: {{ count }}
                     </span>
                 </div>
                 <div v-else class="no-boxes">
@@ -35,7 +37,7 @@ const { pvzList } = storeToRefs(PVZStore);
                 </div>
             </button>
         </div>
-        
+
         <!-- Если ПВЗ нет -->
         <div v-else class="no-pvz">
             <p>Нет доступных ПВЗ</p>
@@ -46,13 +48,11 @@ const { pvzList } = storeToRefs(PVZStore);
 <script>
 // Дополнительная логика
 export default {
+    import: {
+
+    },
     methods: {
-        handlePvzClick(pvzId) {
-            console.log('Выбран ПВЗ с ID:', pvzId);
-            // Здесь можно добавить логику перехода или выбора
-            // Например: this.$router.push(`/pvz/${pvzId}`)
-        },
-        
+
         getTaskTypeCounts(boxes) {
             const counts = {};
             boxes.forEach(box => {
@@ -60,26 +60,18 @@ export default {
             });
             return counts;
         },
-        
+
         getTaskClass(taskType) {
             return {
                 'acceptance': taskType === 'acceptance',
                 'issue': taskType === 'issue',
-                'storage': taskType === 'storage'
             };
         },
-        
-        addTestPVZ() {
-            const testLocations = ['Москва', 'Санкт-Петербург', 'Казань', 'Екатеринбург'];
-            const randomLocation = testLocations[Math.floor(Math.random() * testLocations.length)];
-            
-            this.PVZStore.addPVZ(randomLocation);
-        }
     }
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .pvz-chooser {
     padding: 2rem;
     gap: 1rem;
@@ -126,9 +118,14 @@ export default {
 
 .task-types {
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
     flex-wrap: wrap;
     margin-top: 0.5rem;
+
+    span {
+        text-align: center;
+    }
 }
 
 .task-badge {

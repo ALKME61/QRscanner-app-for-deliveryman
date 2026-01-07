@@ -1,17 +1,17 @@
 <script setup>
 import {useRouter} from 'vue-router'
 import { onMounted } from 'vue';
-import { usePVZStore } from '@/stores/PVZsAndBoxesStore';
+import { usePVZStore } from '@/stores/pvz.store';
 
 const PVZStore = usePVZStore()
 
 onMounted(() => {
   PVZStore.addPVZ(1, "Москва")
   PVZStore.addPVZ(2, "Питер")
-  PVZStore.addBoxes(1, 1, "acceptance")
+  PVZStore.addBoxes(1, 1, "lol")
   PVZStore.addBoxes(2, 1, "acceptance")
-  PVZStore.addBoxes(3, 1, "acceptance")
-  PVZStore.addBoxes(1, 2, "acceptance")
+  PVZStore.addBoxes(3, 1, "issue")
+  PVZStore.addBoxes(1, 2, "issue")
   PVZStore.addBoxes(2, 2, "acceptance")
   PVZStore.addBoxes(3, 2, "acceptance")
 
@@ -20,8 +20,8 @@ onMounted(() => {
 
 const router = useRouter()
 
-function navigateToSelectTask() {
-    router.push('/select-task')
+function navigateToPvzPage() {
+    router.push('/pvz-page')
 }
 </script>
 <template>
@@ -33,7 +33,7 @@ function navigateToSelectTask() {
       <div class="signin__form f-c">
         <input type="text" class="signin__form__input" placeholder="Логин">
         <input type="text" class="signin__form__input" placeholder="Пароль">
-        <button class="signin__form__button button" @click="navigateToSelectTask"><p>Войти в аккаунт</p></button>
+        <button class="signin__form__button button" @click="navigateToPvzPage()"><p>Войти в аккаунт</p></button>
       </div>
     </div>
   </div>

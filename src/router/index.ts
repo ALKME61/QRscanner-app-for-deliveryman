@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import QRscannerPage from './QRscannerPage.vue'
-import homePage from './homePage.vue'
-import selectTaskPage from './selectTaskPage.vue'
+import homePage from '@/router/homePage.vue'
 import PvzPage from './PvzPage.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,17 +11,12 @@ const router = createRouter({
       component: homePage
     },
     {
-      path: '/qr-scanner/:taskType',
+      path: '/qr-scanner/:id',
       name: 'QRscanner',
       component: QRscannerPage
     },
     {
-      path: '/select-task',
-      name: 'SelectTask',
-      component: selectTaskPage,
-    },
-    {
-      path: '/pvz-page/:taskType',
+      path: '/pvz-page',
       name: 'pvzPage',
       component: PvzPage,
     }
