@@ -9,5 +9,5 @@ export interface box {
 export interface PVZ {
     id: number,
     location: string,
-    boxes: box
+    boxes: Array<box>
 }

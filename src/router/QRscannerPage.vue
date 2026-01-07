@@ -4,70 +4,119 @@
             <div class="go-back">
                 <img src="../../public/weui_back-filled.svg" class="go-back__button" @click="onArrowClick" alt="">
             </div>
-            <qrcode-stream :constraints="selectedConstraints" :track="paintCenterText" @error="onError"
-                @detect="onDetect" @camera-on="onCameraReady" style="position: absolute;" />
+            <qrcode-stream 
+                :constraints="selectedConstraints" 
+                :track="paintCenterText" 
+                @error="onError"
+                @detect="onDetect" 
+                @camera-on="onCameraReady" 
+                style="position: absolute;" 
+            />
             <div class="scan-overlay">
-                <CustomSelect :options="3" @click="getTasks"/>
+                <!-- CustomSelect с обработкой выбора -->
+                <CustomSelect 
+                    :options="options" 
+                    @select="handleTaskSelect"
+                    :modelValue="selectedTask"
+                    placeholder=""
+                />
+                
                 <div class="scan-window">
-                    <!-- Уголки для обозначения области сканирования -->
                     <div class="corner corner-tl"></div>
                     <div class="corner corner-tr"></div>
                     <div class="corner corner-bl"></div>
                     <div class="corner corner-br"></div>
                 </div>
-                <div class="task-container">Отсканировано {{ boxCounter.scannedBoxes }}/{{ boxCounter.allBoxes }}</div>
+                
+                <div class="task-container">
+                    Отсканировано {{ boxCounter.scannedBoxes }}/{{ boxCounter.allBoxes }}
+                </div>
             </div>
-
         </div>
     </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { QrcodeStream } from 'vue-qrcode-reader'
 import { useRouter, useRoute } from 'vue-router'
-
 import { usePVZStore } from '@/stores/pvz.store'
 import CustomSelect from '../components/CustomSelect.vue'
 
-import type {TaskType} from '@/types/index'
-/*** detection handling ***/
-
 const router = useRouter()
 const route = useRoute()
-
-//Блок функций работы с pvzstore
-
 const pvzStore = usePVZStore()
 
-function getTasks(){
-    const pvz = pvzStore.pvzList.find(pvz => pvz.id === Number(route.params.id))
+// Выбранный тип задачи
+const selectedTask = ref<string>('')
 
-    console.log(pvz)
+// Обработчик выбора из CustomSelect
+const handleTaskSelect = (taskValue: string) => {
+    selectedTask.value = taskValue
+    console.log('Выбранный тип задачи в QRscanner:', taskValue)
+    
+    // Можно обновить expectedBoxes на основе выбранной задачи
+    updateExpectedBoxes(taskValue)
 }
+
+// Опции для CustomSelect
+const options = computed(() => {
+    const pvzId = Number(route.params.id)
+    const pvz = pvzStore.pvzList.find(pvz => pvz.id === pvzId)
+    
+    if (!pvz) return []
+    
+    // Получаем уникальные типы задач
+    const uniqueTaskTypes = [...new Set(pvz.boxes.map(box => box.taskType))]
+    
+    // Преобразуем в нужный формат для CustomSelect
+    return uniqueTaskTypes.map(taskType => ({
+        value: taskType,
+        label: taskType === 'acceptance' ? 'Приёмка' : 
+               taskType === 'issue' ? 'Выдача' : taskType
+    }))
+})
+
+// Обновляем expectedBoxes на основе выбранной задачи
+const updateExpectedBoxes = (taskType: string) => {
+    const pvzId = Number(route.params.id)
+    const pvz = pvzStore.pvzList.find(pvz => pvz.id === pvzId)
+    
+    if (pvz && taskType) {
+        // Фильтруем боксы по выбранному типу задачи
+        const filteredBoxes = pvz.boxes.filter(box => box.taskType === taskType)
+        
+        expectedBoxes.value = filteredBoxes.map(box => ({
+            id: box.id,
+            taskType: box.taskType
+        }))
+        
+        // Обновляем счетчик
+        boxCounter.value.allBoxes = filteredBoxes.length
+        boxCounter.value.scannedBoxes = 0
+        
+        console.log('Ожидаемые боксы для задачи', taskType, ':', expectedBoxes.value)
+    }
+}
+
+// Следим за изменением selectedTask
+watch(selectedTask, (newTask) => {
+    if (newTask) {
+        updateExpectedBoxes(newTask)
+    }
+})
 
 const boxFingerPrint = {
     token: "helloworld",
 }
 
-const expectedBoxes = ref([
-    {
-        id: 1
-    },
-    {
-        id: 2
-    },
-    {
-        id: 3
-    }
-])
+// Ожидаемые боксы (теперь зависят от выбранной задачи)
+const expectedBoxes = ref<Array<{id: number, taskType?: string}>>([])
 
 const boxCounter = ref({
-    allBoxes: expectedBoxes.value.length,
+    allBoxes: 0,
     scannedBoxes: 0
 })
-
 
 const onArrowClick = () => {
     router.back()
@@ -75,37 +124,50 @@ const onArrowClick = () => {
 
 const result = ref('')
 
-function onDetect(detectedCodes) {
-    console.log(detectedCodes);
-    console.log(choosenTask.currentTask)
-    if (detectedCodes.length > 0) {
-        // Получаем первый обнаруженный код (или обрабатываем все)
-        const detectedId = detectedCodes[0].rawValue;
-        console.log('Обнаружен ID:', detectedId);
+function onDetect(detectedCodes: any[]) {
+    console.log('Обнаружены коды:', detectedCodes)
+    
+    if (detectedCodes.length > 0 && selectedTask.value) {
+        const detectedId = detectedCodes[0].rawValue
+        console.log('Обнаружен ID:', detectedId)
         
-        // Преобразуем в число, если нужно
-        const numericId = Number(detectedId);
+        const numericId = Number(detectedId)
         
-        // Ищем в expectedBoxes по ID
-        const foundBox = expectedBoxes.value.find(box => box.id === numericId);
+        // Ищем бокс в expectedBoxes
+        const foundBox = expectedBoxes.value.find(box => box.id === numericId)
         
         if (foundBox) {
-            console.log('Найден бокс:', foundBox);
-            result.value = JSON.stringify(detectedCodes.map(code => code.rawValue));
+            console.log('Найден бокс:', foundBox)
+            console.log('Тип задачи бокса:', foundBox.taskType)
+            console.log('Выбранная задача:', selectedTask.value)
+            
+            result.value = JSON.stringify(detectedCodes.map(code => code.rawValue))
             boxCounter.value.scannedBoxes++
-            // Дополнительные действия при успешном обнаружении
+            
+            // Убираем отсканированный бокс из ожидаемых
+            expectedBoxes.value = expectedBoxes.value.filter(box => box.id !== numericId)
+            
+            // Показываем сообщение
+            alert(`Отсканирован бокс #${numericId} для задачи "${selectedTask.value === 'acceptance' ? 'Приёмка' : 'Выдача'}"`)
+            
         } else {
-            console.log('Бокс с ID', numericId, 'не найден в ожидаемых');
-            // Действия, если бокс не найден
+            console.log('Бокс с ID', numericId, 'не найден или уже отсканирован')
+            alert(`Бокс #${numericId} не найден для выбранной задачи`)
         }
+    } else if (!selectedTask.value) {
+        alert('Сначала выберите тип задачи!')
     }
-    if(boxCounter.value.scannedBoxes === boxCounter.value.allBoxes){
-        router.back()
+    
+    // Проверяем завершение
+    if (boxCounter.value.scannedBoxes === boxCounter.value.allBoxes && boxCounter.value.allBoxes > 0) {
+        alert('Все боксы отсканированы!')
+        setTimeout(() => {
+            router.back()
+        }, 1000)
     }
 }
 
 /*** select camera ***/
-
 const selectedConstraints = ref({ facingMode: 'environment' })
 const defaultConstraintOptions = [
     { label: 'rear camera', constraints: { facingMode: 'environment' } },
@@ -114,10 +176,6 @@ const defaultConstraintOptions = [
 const constraintOptions = ref(defaultConstraintOptions)
 
 async function onCameraReady() {
-    // NOTE: on iOS we can't invoke `enumerateDevices` before the user has given
-    // camera access permission. `QrcodeStream` internally takes care of
-    // requesting the permissions. The `camera-on` event should guarantee that this
-    // has happened.
     const devices = await navigator.mediaDevices.enumerateDevices()
     const videoDevices = devices.filter(({ kind }) => kind === 'videoinput')
 
@@ -132,9 +190,8 @@ async function onCameraReady() {
     error.value = ''
 }
 
-/*** track functons ***/
-
-function paintOutline(detectedCodes, ctx) {
+/*** track functions ***/
+function paintOutline(detectedCodes: any[], ctx: CanvasRenderingContext2D) {
     for (const detectedCode of detectedCodes) {
         const [firstPoint, ...otherPoints] = detectedCode.cornerPoints
 
@@ -150,7 +207,8 @@ function paintOutline(detectedCodes, ctx) {
         ctx.stroke()
     }
 }
-function paintBoundingBox(detectedCodes, ctx) {
+
+function paintBoundingBox(detectedCodes: any[], ctx: CanvasRenderingContext2D) {
     for (const detectedCode of detectedCodes) {
         const {
             boundingBox: { x, y, width, height },
@@ -161,7 +219,8 @@ function paintBoundingBox(detectedCodes, ctx) {
         ctx.strokeRect(x, y, width, height)
     }
 }
-function paintCenterText(detectedCodes, ctx) {
+
+function paintCenterText(detectedCodes: any[], ctx: CanvasRenderingContext2D) {
     for (const detectedCode of detectedCodes) {
         const { boundingBox, rawValue } = detectedCode
 
@@ -181,6 +240,7 @@ function paintCenterText(detectedCodes, ctx) {
         ctx.fillText(rawValue, centerX, centerY)
     }
 }
+
 const trackFunctionOptions = [
     { text: 'nothing (default)', value: undefined },
     { text: 'outline', value: paintOutline },
@@ -190,7 +250,6 @@ const trackFunctionOptions = [
 const trackFunctionSelected = ref(trackFunctionOptions[1])
 
 /*** barcode formats ***/
-
 const barcodeFormats = ref({
     aztec: false,
     code_128: false,
@@ -214,15 +273,15 @@ const barcodeFormats = ref({
     linear_codes: false,
     matrix_codes: false,
 })
+
 const selectedBarcodeFormats = computed(() => {
     return Object.keys(barcodeFormats.value).filter((format) => barcodeFormats.value[format])
 })
 
 /*** error handling ***/
-
 const error = ref('')
 
-function onError(err) {
+function onError(err: any) {
     error.value = `[${err.name}]: `
 
     if (err.name === 'NotAllowedError') {
@@ -238,8 +297,7 @@ function onError(err) {
     } else if (err.name === 'StreamApiNotSupportedError') {
         error.value += 'Stream API is not supported in this browser'
     } else if (err.name === 'InsecureContextError') {
-        error.value +=
-            'Camera access is only permitted in secure context. Use HTTPS or localhost rather than HTTP.'
+        error.value += 'Camera access is only permitted in secure context. Use HTTPS or localhost rather than HTTP.'
     } else {
         error.value += err.message
     }
@@ -264,11 +322,11 @@ function onError(err) {
 
 .task-container {
     background-color: #fff;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    padding-left: 1.75rem;
-    padding-right: 1.75rem;
+    padding: 1rem 1.75rem;
     border-radius: 8px;
+    text-align: center;
+    margin-top: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .scan-overlay {
