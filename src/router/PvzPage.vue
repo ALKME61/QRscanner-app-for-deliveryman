@@ -11,7 +11,7 @@ const PVZStore = usePVZStore();
 const { pvzList } = storeToRefs(PVZStore);
 
 function handlePvzClick(pvzId) {
-    router.push(`qr-scanner/${pvzId}`)
+    router.push(`/qr-scanner/${pvzId}`)
     // Здесь можно добавить логику перехода или выбора
     // Например: this.$router.push(`/pvz/${pvzId}`)
 }

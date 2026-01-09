@@ -4,30 +4,20 @@
             <div class="go-back">
                 <img src="../../public/weui_back-filled.svg" class="go-back__button" @click="onArrowClick" alt="">
             </div>
-            <qrcode-stream 
-                :constraints="selectedConstraints" 
-                :track="paintCenterText" 
-                @error="onError"
-                @detect="onDetect" 
-                @camera-on="onCameraReady" 
-                style="position: absolute;" 
-            />
+            <div class="bad-qr" v-if="!isQrRight">Коробка не найдена</div>
+            <qrcode-stream :paused="paused" :constraints="selectedConstraints" :track="paintCenterText" @error="onError"
+                @detect="onDetect" @camera-on="onCameraReady" style="position: absolute;" />
             <div class="scan-overlay">
                 <!-- CustomSelect с обработкой выбора -->
-                <CustomSelect 
-                    :options="options" 
-                    @select="handleTaskSelect"
-                    :modelValue="selectedTask"
-                    placeholder=""
-                />
-                
+                <CustomSelect :options="options" @select="handleTaskSelect" :modelValue="selectedTask" placeholder="" />
+
                 <div class="scan-window">
                     <div class="corner corner-tl"></div>
                     <div class="corner corner-tr"></div>
                     <div class="corner corner-bl"></div>
                     <div class="corner corner-br"></div>
                 </div>
-                
+
                 <div class="task-container">
                     Отсканировано {{ boxCounter.scannedBoxes }}/{{ boxCounter.allBoxes }}
                 </div>
@@ -35,6 +25,39 @@
         </div>
     </div>
 </template>
+<script lang="ts">
+
+export default {
+    components: { QrcodeStream },
+
+    data() {
+        return {
+            showScanConfirmation: false
+        }
+    },
+
+    methods: {
+        onCameraOn() {
+            this.showScanConfirmation = false
+        },
+
+        onCameraOff() {
+            this.showScanConfirmation = true
+        },
+
+        onError: console.error,
+
+        timeout(ms) {
+            return new Promise((resolve) => {
+                window.setTimeout(resolve, ms)
+            })
+        },
+
+
+    }
+}
+</script>
+
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
@@ -54,7 +77,7 @@ const selectedTask = ref<string>('')
 const handleTaskSelect = (taskValue: string) => {
     selectedTask.value = taskValue
     console.log('Выбранный тип задачи в QRscanner:', taskValue)
-    
+
     // Можно обновить expectedBoxes на основе выбранной задачи
     updateExpectedBoxes(taskValue)
 }
@@ -63,17 +86,17 @@ const handleTaskSelect = (taskValue: string) => {
 const options = computed(() => {
     const pvzId = Number(route.params.id)
     const pvz = pvzStore.pvzList.find(pvz => pvz.id === pvzId)
-    
+
     if (!pvz) return []
-    
+
     // Получаем уникальные типы задач
     const uniqueTaskTypes = [...new Set(pvz.boxes.map(box => box.taskType))]
-    
+
     // Преобразуем в нужный формат для CustomSelect
     return uniqueTaskTypes.map(taskType => ({
         value: taskType,
-        label: taskType === 'acceptance' ? 'Приёмка' : 
-               taskType === 'issue' ? 'Выдача' : taskType
+        label: taskType === 'acceptance' ? 'Приёмка' :
+            taskType === 'issue' ? 'Выдача' : taskType
     }))
 })
 
@@ -81,20 +104,20 @@ const options = computed(() => {
 const updateExpectedBoxes = (taskType: string) => {
     const pvzId = Number(route.params.id)
     const pvz = pvzStore.pvzList.find(pvz => pvz.id === pvzId)
-    
+
     if (pvz && taskType) {
         // Фильтруем боксы по выбранному типу задачи
         const filteredBoxes = pvz.boxes.filter(box => box.taskType === taskType)
-        
+
         expectedBoxes.value = filteredBoxes.map(box => ({
             id: box.id,
             taskType: box.taskType
         }))
-        
+
         // Обновляем счетчик
         boxCounter.value.allBoxes = filteredBoxes.length
         boxCounter.value.scannedBoxes = 0
-        
+
         console.log('Ожидаемые боксы для задачи', taskType, ':', expectedBoxes.value)
     }
 }
@@ -111,7 +134,7 @@ const boxFingerPrint = {
 }
 
 // Ожидаемые боксы (теперь зависят от выбранной задачи)
-const expectedBoxes = ref<Array<{id: number, taskType?: string}>>([])
+const expectedBoxes = ref<Array<{ id: number, taskType?: string }>>([])
 
 const boxCounter = ref({
     allBoxes: 0,
@@ -122,42 +145,58 @@ const onArrowClick = () => {
     router.back()
 }
 
-const result = ref('')
+async function timeout(ms) {
+    return new Promise((resolve) => {
+        window.setTimeout(resolve, ms)
+        isQrRight.value = true
+    })
+}
 
-function onDetect(detectedCodes: any[]) {
-    console.log('Обнаружены коды:', detectedCodes)
-    
+const result = ref('')
+const paused = ref(false)
+const isQrRight = ref(true)
+
+async function onDetect(detectedCodes: any[]) {
+
+    paused.value = true
+    await timeout(500)
+    paused.value = false
+
+        console.log('Обнаружены коды:', detectedCodes)
+
     if (detectedCodes.length > 0 && selectedTask.value) {
         const detectedId = detectedCodes[0].rawValue
         console.log('Обнаружен ID:', detectedId)
-        
+
         const numericId = Number(detectedId)
-        
+
         // Ищем бокс в expectedBoxes
         const foundBox = expectedBoxes.value.find(box => box.id === numericId)
-        
+
         if (foundBox) {
             console.log('Найден бокс:', foundBox)
             console.log('Тип задачи бокса:', foundBox.taskType)
             console.log('Выбранная задача:', selectedTask.value)
-            
+
             result.value = JSON.stringify(detectedCodes.map(code => code.rawValue))
             boxCounter.value.scannedBoxes++
-            
-            // Убираем отсканированный бокс из ожидаемых
+
+            // Убираем отсканированный бокс из ожидаемых и удаляем из store
             expectedBoxes.value = expectedBoxes.value.filter(box => box.id !== numericId)
-            
+
+            isQrRight.value = true
             // Показываем сообщение
             alert(`Отсканирован бокс #${numericId} для задачи "${selectedTask.value === 'acceptance' ? 'Приёмка' : 'Выдача'}"`)
-            
+
         } else {
             console.log('Бокс с ID', numericId, 'не найден или уже отсканирован')
             alert(`Бокс #${numericId} не найден для выбранной задачи`)
+            isQrRight.value = false
         }
     } else if (!selectedTask.value) {
         alert('Сначала выберите тип задачи!')
     }
-    
+
     // Проверяем завершение
     if (boxCounter.value.scannedBoxes === boxCounter.value.allBoxes && boxCounter.value.allBoxes > 0) {
         alert('Все боксы отсканированы!')
@@ -165,6 +204,7 @@ function onDetect(detectedCodes: any[]) {
             router.back()
         }, 1000)
     }
+    paused.value = false
 }
 
 /*** select camera ***/
@@ -305,6 +345,19 @@ function onError(err: any) {
 </script>
 
 <style scoped lang="scss">
+.bad-qr {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    top:41%;
+    z-index:123153136136;
+    color: #ffffffcb;
+    font-size: 32px;
+    font-weight: 300;
+    transition-duration: 0.4s;
+}
 .go-back {
     position: absolute;
     top: 12%;
@@ -326,7 +379,7 @@ function onError(err: any) {
     border-radius: 8px;
     text-align: center;
     margin-top: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .scan-overlay {

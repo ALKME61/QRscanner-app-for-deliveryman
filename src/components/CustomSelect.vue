@@ -30,6 +30,8 @@ const handleClickOutside = (event: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+
+  selectOption('acceptance')
 })
 
 onBeforeUnmount(() => {
